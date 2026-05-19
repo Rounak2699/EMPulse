@@ -1612,8 +1612,37 @@
       });
     });
 
+    // ══ BACKGROUND IMAGE PRELOADER ══
+    window._preloadedImages = {};
+    function preloadImagesForPDF() {
+      const sources = ['assets/Excel.jpeg'];
+      if (typeof SECS !== 'undefined') {
+        SECS.forEach(sec => { if (sec.img) sources.push(sec.img); });
+      }
+      
+      sources.forEach(src => {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            window._preloadedImages[src] = { data: canvas.toDataURL('image/jpeg', 0.8), width: img.width, height: img.height };
+          } catch(e) {
+            window._preloadedImages[src] = { data: img, width: img.width, height: img.height };
+          }
+        };
+        img.onerror = () => { window._preloadedImages[src] = null; };
+        img.src = src;
+      });
+    }
+
     // Add event listener for custom college input
     document.addEventListener('DOMContentLoaded', () => {
+      preloadImagesForPDF();
       const otherInput = document.getElementById('inp-college-other');
       if (otherInput) {
         otherInput.addEventListener('input', () => {
@@ -1785,19 +1814,30 @@
         const hBar = (x, y, val, max, w, col) => { doc.setFillColor(232, 237, 244); doc.roundedRect(x, y, w, 3, 1.5, 1.5, 'F'); if (val > 0) { doc.setFillColor(...h2r(col)); doc.roundedRect(x, y, (w * val / max), 3, 1.5, 1.5, 'F') } };
 
         const pill = (txt, x, y, col) => { const rgb = h2r(col); const safeTxt = pdfText(txt); const tw = doc.getTextWidth(safeTxt) + 8; const bg = [Math.round(rgb[0] * 0.15 + 255 * 0.85), Math.round(rgb[1] * 0.15 + 255 * 0.85), Math.round(rgb[2] * 0.15 + 255 * 0.85)]; doc.setFillColor(...bg); doc.roundedRect(x, y - 3.5, tw, 5.5, 2.5, 2.5, 'F'); doc.setDrawColor(...rgb); doc.setLineWidth(0.25); doc.roundedRect(x, y - 3.5, tw, 5.5, 2.5, 2.5, 'S'); doc.setTextColor(...rgb); doc.setFontSize(7); doc.setFont('helvetica', 'bold'); tx(safeTxt, x + 4, y, { baseline: 'middle' }) };
-        const loadPdfImg = src => new Promise(resolve => { const img = new Image(); img.onload = () => resolve(img); img.onerror = () => resolve(null); img.src = src });
+        const loadPdfImg = async src => {
+          if (window._preloadedImages && window._preloadedImages[src] !== undefined) {
+            return window._preloadedImages[src];
+          }
+          return new Promise(resolve => { 
+            const img = new Image(); 
+            img.crossOrigin = 'Anonymous';
+            img.onload = () => resolve({ data: img, width: img.width, height: img.height }); 
+            img.onerror = () => resolve(null); 
+            img.src = src; 
+          });
+        };
 
         /* ════ PAGE 1 ════ */
         const uniBannerSrc = 'assets/Excel.jpeg';
-        const uniBanner = await loadPdfImg(uniBannerSrc);
-        const headerY = uniBanner ? 31 : 0;
+        const uniBannerObj = await loadPdfImg(uniBannerSrc);
+        const headerY = uniBannerObj ? 31 : 0;
 
         fillRect(0, 0, W, H, [246, 248, 252]);
-        if (uniBanner) {
-          const ar = (uniBanner.width && uniBanner.height) ? (uniBanner.width / uniBanner.height) : 4.5;
+        if (uniBannerObj) {
+          const ar = (uniBannerObj.width && uniBannerObj.height) ? (uniBannerObj.width / uniBannerObj.height) : 4.5;
           let bw = W - 24, bh = bw / ar;
           if (bh > 24) { bh = 24; bw = bh * ar }
-          doc.addImage(uniBanner, 'PNG', (W - bw) / 2, 4, bw, bh, undefined, 'FAST');
+          doc.addImage(uniBannerObj.data, 'JPEG', (W - bw) / 2, 4, bw, bh, undefined, 'FAST');
         }
         fillRect(0, headerY, W, 22, [31, 41, 55]);
         fillRect(0, headerY + 22, W, 0.8, [212, 168, 67]);
@@ -1997,9 +2037,9 @@
 
           rndRect(12, y, W - 24, CARD_H, [255, 255, 255], [217, 224, 234]);
 
-          const secImg = await loadPdfImg(sec.img);
-          if (secImg) {
-            try { doc.addImage(secImg, 'PNG', mediaX + 1, y + 1, mediaW - 2, CARD_H - 2, undefined, 'FAST') } catch (e) { }
+          const secImgObj = await loadPdfImg(sec.img);
+          if (secImgObj && secImgObj.data) {
+            try { doc.addImage(secImgObj.data, 'JPEG', mediaX + 1, y + 1, mediaW - 2, CARD_H - 2, undefined, 'FAST') } catch (e) { }
           } else {
             fillRect(mediaX + 1, y + 1, mediaW - 2, CARD_H - 2, [235, 239, 245]);
             sf('bold', 8, secRgb); tx(sec.id, mediaX + (mediaW / 2), y + (CARD_H / 2), { align: 'center' });
