@@ -1,0 +1,2101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Excel MindPulse — Stress Assessment</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    :root {
+      --bg: #07080d;
+      --bg2: #0f1118;
+      --bg3: #161a24;
+      --bg4: #1c2030;
+      --border: rgba(255, 255, 255, 0.07);
+      --border2: rgba(255, 255, 255, 0.13);
+      --text: #eeeae0;
+      --text2: #8a8680;
+      --text3: #4a4845;
+      --gold: #d4a843;
+      --gold2: #f0c75a;
+      --gold-dim: rgba(212, 168, 67, 0.1);
+      --blue: #4a8fe8;
+      --purple: #9b6de8;
+      --r: 12px;
+      --r2: 20px;
+      --r3: 28px;
+    }
+
+    html {
+      scroll-behavior: smooth
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden
+    }
+
+    .screen {
+      display: none;
+      min-height: 100vh;
+      flex-direction: column
+    }
+
+    .screen.active {
+      display: flex
+    }
+
+    #screen-quiz.active {
+      display: flex
+    }
+
+    .amb {
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+      filter: blur(100px);
+      opacity: 0.13
+    }
+
+    .a1 {
+      width: 600px;
+      height: 600px;
+      background: var(--gold);
+      top: -200px;
+      right: -200px
+    }
+
+    .a2 {
+      width: 500px;
+      height: 500px;
+      background: var(--blue);
+      bottom: -150px;
+      left: -150px
+    }
+
+    .a3 {
+      width: 350px;
+      height: 350px;
+      background: var(--purple);
+      top: 45%;
+      left: 25%
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(24px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translateY(0)
+      }
+
+      50% {
+        transform: translateY(-8px)
+      }
+    }
+
+    @keyframes ripple {
+      0% {
+        transform: scale(0);
+        opacity: 1
+      }
+
+      100% {
+        transform: scale(4);
+        opacity: 0
+      }
+    }
+
+    .au1 {
+      animation: fadeUp .5s ease both
+    }
+
+    .au2 {
+      animation: fadeUp .5s .08s ease both
+    }
+
+    .au3 {
+      animation: fadeUp .5s .16s ease both
+    }
+
+    .au4 {
+      animation: fadeUp .5s .24s ease both
+    }
+
+    .au5 {
+      animation: fadeUp .5s .32s ease both
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 13px 28px;
+      border-radius: var(--r);
+      border: none;
+      cursor: pointer;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all .2s;
+      text-decoration: none;
+      overflow: hidden
+    }
+
+    .btn-gold {
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      color: #07080d
+    }
+
+    .btn-gold:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(212, 168, 67, .35)
+    }
+
+    .btn-ghost {
+      background: var(--bg3);
+      color: var(--text2);
+      border: 1px solid var(--border2)
+    }
+
+    .btn-ghost:hover {
+      background: var(--bg4);
+      color: var(--text)
+    }
+
+    .form-group {
+      margin-bottom: 1.1rem;
+      position: relative
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--text2);
+      margin-bottom: 7px;
+      transition: color .3s ease
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 11px 14px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 14px;
+      transition: border-color .3s cubic-bezier(.4, 0, .2, 1), background-color .3s ease, box-shadow .3s ease, transform .2s ease;
+      appearance: none;
+      position: relative
+    }
+
+    .form-group input:hover:not(:focus) {
+      background: var(--bg4);
+      border-color: var(--border2)
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--gold);
+      background: var(--bg4);
+      box-shadow: 0 0 0 3px rgba(212, 168, 67, .12), inset 0 0 12px rgba(212, 168, 67, .05);
+      transform: translateY(-1px)
+    }
+
+    .form-group input:not(:placeholder-shown) {
+      background: linear-gradient(135deg, var(--bg3) 0%, rgba(212, 168, 67, .03) 100%)
+    }
+
+    .form-group input:not(:placeholder-shown):focus {
+      background: linear-gradient(135deg, var(--bg4) 0%, rgba(212, 168, 67, .05) 100%)
+    }
+
+    .form-group input::placeholder {
+      color: var(--text2);
+      transition: color .3s ease
+    }
+
+    .form-group input:focus::placeholder {
+      color: var(--gold);
+      opacity: 0.5
+    }
+
+    .form-group select {
+      width: 100%;
+      padding: 11px 14px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 14px;
+      transition: border-color .3s cubic-bezier(.4, 0, .2, 1), background-color .3s ease, box-shadow .3s ease, transform .2s ease;
+      cursor: pointer;
+      appearance: none;
+      padding-right: 40px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%238a8680' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 40px;
+      position: relative
+    }
+
+    .form-group select:hover:not(:focus) {
+      background-color: var(--bg4);
+      border-color: var(--border2);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%238a8680' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center
+    }
+
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--gold);
+      background-color: var(--bg4);
+      box-shadow: 0 0 0 3px rgba(212, 168, 67, .12), inset 0 0 12px rgba(212, 168, 67, .05);
+      transform: translateY(-1px);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23d4a843' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center
+    }
+
+    .form-group select option {
+      background: var(--bg);
+      color: var(--text);
+      padding: 10px;
+      border-radius: 4px
+    }
+
+    .form-group select option:hover {
+      background: var(--bg3);
+      color: var(--gold)
+    }
+
+    .form-group select option:checked {
+      background: linear-gradient(#d4a843, #d4a843);
+      background-color: var(--gold);
+      color: var(--bg)
+    }
+
+    .form-group select option[disabled] {
+      color: var(--gold);
+      font-weight: 600;
+      background: transparent
+    }
+
+    .form-group select.has-error {
+      border-color: #e87a6a;
+      background-color: var(--bg3);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23e87a6a' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      box-shadow: inset 0 0 8px rgba(232, 98, 74, .08)
+    }
+
+    .form-group select.has-error:focus {
+      border-color: #e87a6a;
+      background-color: var(--bg4);
+      box-shadow: 0 0 0 3px rgba(232, 98, 74, .12), inset 0 0 12px rgba(232, 98, 74, .05);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23e87a6a' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center
+    }
+
+    #inp-college-other {
+      width: 100%;
+      padding: 11px 14px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 14px;
+      transition: all .3s cubic-bezier(.4, 0, .2, 1);
+      animation: slideInOther .3s ease;
+    }
+
+    @keyframes slideInOther {
+      from {
+        opacity: 0;
+        transform: translateY(-8px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    #inp-college-other:hover:not(:focus) {
+      background: var(--bg4);
+      border-color: var(--border2)
+    }
+
+    #inp-college-other:focus {
+      outline: none;
+      border-color: var(--gold);
+      background: var(--bg4);
+      box-shadow: 0 0 0 3px rgba(212, 168, 67, .12), inset 0 0 12px rgba(212, 168, 67, .05);
+      transform: translateY(-1px)
+    }
+
+    #inp-college-other::placeholder {
+      color: var(--text2);
+      transition: color .3s ease
+    }
+
+    #inp-college-other:focus::placeholder {
+      color: var(--gold);
+      opacity: 0.5
+    }
+
+    #inp-college-other.has-error {
+      border-color: #e87a6a;
+      background: linear-gradient(135deg, var(--bg3) 0%, rgba(232, 98, 74, .03) 100%)
+    }
+
+    #inp-college-other.has-error:focus {
+      border-color: #e87a6a;
+      box-shadow: 0 0 0 3px rgba(232, 98, 74, .12), inset 0 0 12px rgba(232, 98, 74, .05)
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .75rem
+    }
+
+    @media(max-width:520px) {
+      .form-row {
+        grid-template-columns: 1fr
+      }
+    }
+
+    .gender-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap
+    }
+
+    .gender-btn {
+      flex: 1;
+      min-width: 68px;
+      padding: 9px 8px;
+      border-radius: var(--r);
+      border: 1px solid var(--border);
+      background: var(--bg3);
+      color: var(--text2);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .3s cubic-bezier(.4, 0, .2, 1);
+      text-align: center;
+      position: relative;
+      overflow: hidden
+    }
+
+    .gender-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(212, 168, 67, .1) 0%, transparent 100%);
+      opacity: 0;
+      transition: opacity .3s ease
+    }
+
+    .gender-btn:hover {
+      border-color: var(--border2);
+      background: var(--bg4);
+      color: var(--text);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(212, 168, 67, .1)
+    }
+
+    .gender-btn:hover::before {
+      opacity: 1
+    }
+
+    .gender-btn.sel {
+      border-color: var(--gold);
+      background: linear-gradient(135deg, var(--gold-dim) 0%, rgba(212, 168, 67, .05) 100%);
+      color: var(--gold2);
+      box-shadow: 0 0 20px rgba(212, 168, 67, .25);
+      transform: scale(1.02)
+    }
+
+    .err {
+      color: #e87a6a;
+      font-size: 11px;
+      margin-top: 4px;
+      display: none;
+      animation: slideInError .3s ease;
+      font-weight: 500
+    }
+
+    @keyframes slideInError {
+      from {
+        opacity: 0;
+        transform: translateX(-8px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0)
+      }
+    }
+
+    .form-group input.has-error {
+      border-color: #e87a6a;
+      background: linear-gradient(135deg, var(--bg3) 0%, rgba(232, 98, 74, .03) 100%)
+    }
+
+    .form-group input.has-error:focus {
+      border-color: #e87a6a;
+      box-shadow: 0 0 0 3px rgba(232, 98, 74, .12), inset 0 0 12px rgba(232, 98, 74, .05)
+    }
+
+    .form-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 1.2rem 0
+    }
+
+    .form-sec-lbl {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--text3);
+      margin-bottom: .85rem
+    }
+
+    /* ══ SCREEN 0: AUTH LOGIN ══ */
+    #screen-auth {
+      background: var(--bg);
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 420px;
+      position: relative;
+      z-index: 2;
+      padding: 2rem
+    }
+
+    .auth-banner {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+      border: 1px solid var(--border2);
+      background: #fff
+    }
+
+    .auth-logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 36px;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: .3rem
+    }
+
+    .auth-logo span {
+      color: var(--gold)
+    }
+
+    .auth-tagline {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text2);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      margin-bottom: 2.5rem
+    }
+
+    .auth-box {
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: var(--r3);
+      padding: 2rem
+    }
+
+    .auth-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: .3rem
+    }
+
+    .auth-sub {
+      font-size: 12.5px;
+      color: var(--text2);
+      margin-bottom: 1.5rem;
+      line-height: 1.6
+    }
+
+    .auth-err {
+      background: rgba(232, 98, 74, .12);
+      border: 1px solid rgba(232, 98, 74, .3);
+      border-radius: var(--r);
+      padding: 10px 14px;
+      font-size: 12.5px;
+      color: #e87a6a;
+      margin-bottom: 1rem;
+      display: none
+    }
+
+    .pass-wrap {
+      position: relative
+    }
+
+    .pass-wrap input {
+      padding-right: 44px
+    }
+
+    .pass-toggle {
+      position: absolute;
+      right: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text3);
+      font-size: 14px;
+      padding: 2px
+    }
+
+    .pass-toggle:hover {
+      color: var(--text2)
+    }
+
+    .auth-hint {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text3);
+      margin-top: 1rem
+    }
+
+    .auth-hint span {
+      color: var(--text2)
+    }
+
+    /* ══ SCREEN 1: USER DETAILS ══ */
+    #screen-login {
+      background: var(--bg);
+      position: relative;
+      overflow: hidden
+    }
+
+    .login-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      min-height: 100vh;
+      position: relative;
+      z-index: 2
+    }
+
+    .login-form-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+      overflow-y: auto
+    }
+
+    .login-form-inner {
+      width: 100%;
+      max-width: 400px
+    }
+
+    .login-welcome {
+      font-family: 'Syne', sans-serif;
+      font-size: 27px;
+      font-weight: 700;
+      margin-bottom: .4rem
+    }
+
+    .login-welcome em {
+      color: var(--gold);
+      font-style: italic
+    }
+
+    .login-sub {
+      font-size: 13px;
+      color: var(--text2);
+      margin-bottom: 1.75rem;
+      line-height: 1.6
+    }
+
+    /* ══ SCREEN 2: QUIZ ══ */
+    #screen-quiz {
+      background: var(--bg);
+      height: 100vh;
+      overflow: hidden
+    }
+
+    .quiz-topbar {
+      flex-shrink: 0;
+      padding: .85rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      background: rgba(7, 8, 13, .95);
+      backdrop-filter: blur(16px);
+      z-index: 10
+    }
+
+    .quiz-topbar-inner {
+      max-width: 700px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 1rem
+    }
+
+    .quiz-logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      flex-shrink: 0
+    }
+
+    .quiz-logo span {
+      color: var(--gold)
+    }
+
+    .prog-bar-bg {
+      flex: 1;
+      height: 6px;
+      background: var(--bg3);
+      border-radius: 3px;
+      overflow: hidden
+    }
+
+    .prog-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold), var(--gold2));
+      border-radius: 3px;
+      transition: width .6s cubic-bezier(.4, 0, .2, 1)
+    }
+
+    .prog-pct {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--gold);
+      min-width: 32px;
+      text-align: right;
+      flex-shrink: 0
+    }
+
+    .slide-viewport {
+      flex: 1;
+      overflow: hidden;
+      position: relative
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem 1rem;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(50px);
+      transition: opacity .38s ease, transform .38s ease
+    }
+
+    .slide.active {
+      opacity: 1;
+      pointer-events: all;
+      transform: translateX(0)
+    }
+
+    .slide.exit-left {
+      opacity: 0;
+      transform: translateX(-50px);
+      pointer-events: none
+    }
+
+    .slide-card {
+      width: 100%;
+      max-width: 640px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--r3);
+      padding: 2.25rem 2.25rem 1.75rem;
+      position: relative;
+      overflow: hidden
+    }
+
+    .slide-illus {
+      font-size: 58px;
+      text-align: center;
+      margin-bottom: 1rem;
+      line-height: 1;
+      animation: float 3s ease-in-out infinite
+    }
+
+    .q-text {
+      font-family: 'Syne', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+      line-height: 1.55;
+      color: var(--text);
+      margin-bottom: 1.6rem
+    }
+
+    .opts {
+      display: flex;
+      flex-direction: column;
+      gap: 9px
+    }
+
+    .opt-btn {
+      width: 100%;
+      text-align: left;
+      padding: 13px 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--bg3);
+      color: var(--text2);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 13.5px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .18s;
+      line-height: 1.5;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+      overflow: hidden
+    }
+
+    .opt-btn .mk {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border2);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text3);
+      transition: all .18s
+    }
+
+    .opt-btn:hover {
+      border-color: var(--border2);
+      background: var(--bg4);
+      color: var(--text)
+    }
+
+    .opt-btn:hover .mk {
+      border-color: var(--gold);
+      color: var(--gold)
+    }
+
+    .opt-btn.sel {
+      border-color: var(--gold);
+      background: var(--gold-dim);
+      color: var(--text)
+    }
+
+    .opt-btn.sel .mk {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: #07080d
+    }
+
+    .opt-ripple {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(212, 168, 67, .4);
+      pointer-events: none;
+      animation: ripple .5s ease-out forwards;
+      transform-origin: center
+    }
+
+    /* ══ SCREEN 3: REPORT ══ */
+    #screen-report {
+      background: var(--bg)
+    }
+
+    .thanks-wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem
+    }
+
+    .thanks-card {
+      width: 100%;
+      max-width: 620px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--r3);
+      padding: 2.2rem;
+      text-align: center
+    }
+
+    .thanks-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: .5rem
+    }
+
+    .thanks-sub {
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.7;
+      margin-bottom: 1.4rem
+    }
+
+    .thanks-note {
+      font-size: 12px;
+      color: var(--text3);
+      margin-top: 1rem
+    }
+
+    /* ══ SCREEN: ACCESS DENIED ══ */
+    #screen-denied {
+      background: var(--bg);
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden
+    }
+
+    .denied-card {
+      width: 100%;
+      max-width: 460px;
+      background: var(--bg2);
+      border: 1px solid rgba(232, 98, 74, 0.35);
+      border-radius: var(--r3);
+      padding: 2.8rem 2.4rem;
+      text-align: center;
+      position: relative;
+      z-index: 2
+    }
+
+    .denied-icon {
+      font-size: 56px;
+      margin-bottom: 1rem;
+      line-height: 1;
+      display: block
+    }
+
+    .denied-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 26px;
+      font-weight: 800;
+      color: #e8624a;
+      margin-bottom: .5rem
+    }
+
+    .denied-sub {
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.7;
+      margin-bottom: 1.8rem
+    }
+
+    .denied-badge {
+      display: inline-block;
+      background: rgba(232, 98, 74, 0.12);
+      border: 1px solid rgba(232, 98, 74, 0.3);
+      border-radius: 50px;
+      padding: 5px 16px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #e8624a;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 1.6rem
+    }
+
+    ::-webkit-scrollbar {
+      width: 5px
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg)
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border2);
+      border-radius: 3px
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="amb a1"></div>
+  <div class="amb a2"></div>
+  <div class="amb a3"></div>
+
+  <!-- ════════════ SCREEN 0: AUTH LOGIN ════════════ -->
+  <div id="screen-auth" class="screen active">
+    <div class="auth-card au1">
+      <div class="auth-banner"
+        style="background-image:url('/assets/Excel.jpeg');background-size:cover;background-position:center;height: 70px;">
+      </div>
+      <div class="auth-logo">Excel Mind<span>Pulse</span></div>
+      <div class="auth-tagline">Faculty Stress Assessment Portal</div>
+      <div class="auth-box">
+        <div class="auth-title au2">Welcome 👋</div>
+        <div class="auth-sub au3">Sign in to access your assessment dashboard.</div>
+        <div class="auth-err" id="auth-err">Incorrect username or password. Please try again.</div>
+        <div class="form-group au3">
+          <label>Username</label>
+          <input type="text" id="auth-user" placeholder="Enter username" autocomplete="off">
+        </div>
+        <div class="form-group au4">
+          <label>Password</label>
+          <div class="pass-wrap">
+            <input type="password" id="auth-pass" placeholder="Enter password"
+              onkeydown="if(event.key==='Enter')doAuth()">
+            <button class="pass-toggle" onclick="togglePass()" title="Show/hide password">👁</button>
+          </div>
+        </div>
+        <button class="btn btn-gold au5" style="width:100%;font-size:15px;padding:14px;margin-top:.5rem"
+          onclick="doAuth()">
+          Sign In
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════ SCREEN 1: USER DETAILS ════════════ -->
+  <div id="screen-login" class="screen">
+    <div class="login-layout">
+      <div class="login-form-wrap">
+        <div class="login-form-inner">
+          <div class="login-welcome au1">Your <em>details</em> please</div>
+          <div class="form-sec-lbl au3">Personal info</div>
+          <div class="form-row au3">
+            <div class="form-group">
+              <label>Full Name *</label>
+              <input type="text" id="inp-name" placeholder="Your name" autocomplete="off">
+              <div class="err" id="err-name">Please enter your name.</div>
+            </div>
+            <div class="form-group">
+              <label>Date of Birth *</label>
+              <input type="text" id="inp-dob" placeholder="DD/MM/YYYY" autocomplete="off">
+              <div class="err" id="err-dob">Please enter your DOB (DD/MM/YYYY).</div>
+            </div>
+          </div>
+          <div class="form-row au3">
+            <div class="form-group">
+              <label>Age *</label>
+              <input type="text" id="inp-age" readonly>
+              <div class="err" id="err-age">Valid age (18–80).</div>
+            </div>
+            <div class="form-group">
+              <label>Gender *</label>
+              <div class="gender-group">
+                <button class="gender-btn" onclick="pickGender(this,'Male')">Male</button>
+                <button class="gender-btn" onclick="pickGender(this,'Female')">Female</button>
+                <button class="gender-btn" onclick="pickGender(this,'Other')">Other</button>
+              </div>
+              <div class="err" id="err-gender">Please select gender.</div>
+            </div>
+          </div>
+          <div class="form-divider au4"></div>
+          <div class="form-sec-lbl au4">Academic info</div>
+          <div class="form-group au4">
+            <label>College / Institution *</label>
+            <select id="inp-college" autocomplete="off">
+              <option value="">-- Select Institution --</option>
+              <option value="Excel Engineering College (AUTONOMOUS)">Excel Engineering College (AUTONOMOUS)</option>
+              <option value="Excel College of Architecture & Planning">Excel College of Architecture & Planning</option>
+              <option value="Excel Polytechnic College">Excel Polytechnic College</option>
+              <option value="Excel College for Commerce & Science">Excel College for Commerce & Science</option>
+              <option value="Excel College of Education">Excel College of Education</option>
+              <option value="Excel Homoeopathy Medical College">Excel Homoeopathy Medical College</option>
+              <option value="Excel Siddha Medical College & Research Centre">Excel Siddha Medical College & Research
+                Centre</option>
+              <option value="Excel Medical College for Naturopathy & Yoga">Excel Medical College for Naturopathy & Yoga
+              </option>
+              <option value="Excel College of Pharmacy">Excel College of Pharmacy</option>
+              <option value="Excel College of Physiotherapy & Research Centre">Excel College of Physiotherapy & Research
+                Centre</option>
+              <option value="Excel Nursing College">Excel Nursing College</option>
+              <option value="Excel Institute of Health Sciences">Excel Institute of Health Sciences</option>
+              <option value="Excel Public School (CBSE)">Excel Public School (CBSE)</option>
+              <option value="Others">Others</option>
+            </select>
+            <input type="text" id="inp-college-other" placeholder="Enter your college/institution name"
+              autocomplete="off" style="display: none; margin-top: 8px;">
+            <div class="err" id="err-college">Please select your institution.</div>
+          </div>
+          <div class="form-group au4">
+            <label>Designation - Department *</label>
+            <input type="text" id="inp-dept" placeholder="e.g. Student - CSE" autocomplete="off">
+            <div class="err" id="err-dept">Please enter your department.</div>
+          </div>
+          <button class="btn btn-gold au5" style="width:100%;font-size:15px;padding:14px" onclick="submitLogin()">
+            Start Assessment
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════ SCREEN 2: QUIZ ════════════ -->
+  <div id="screen-quiz" class="screen">
+    <div class="quiz-topbar">
+      <div class="quiz-topbar-inner">
+        <div class="quiz-logo" style="color:var(--text)">Excel Mind<span style="color:var(--gold)">Pulse</span></div>
+        <div class="prog-bar-bg">
+          <div class="prog-bar-fill" id="prog-fill" style="width:0%"></div>
+        </div>
+        <div class="prog-pct" id="prog-pct">0%</div>
+      </div>
+    </div>
+    <div class="slide-viewport" id="slide-viewport"></div>
+  </div>
+
+  <!-- ════════════ SCREEN 3: THANK YOU ════════════ -->
+  <div id="screen-report" class="screen">
+    <div class="thanks-wrap">
+      <div class="thanks-card au1">
+        <div class="thanks-title">Thank you for attending the test</div>
+        <div class="thanks-sub">
+          Your assessment is complete. Your report PDF is being downloaded automatically.
+        </div>
+        <button class="btn btn-gold" onclick="downloadReport()">Download Report Again</button>
+        <div class="thanks-note">You can close this tab after the download finishes.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════ SCREEN: ACCESS DENIED ════════════ -->
+  <div id="screen-denied" class="screen">
+    <div class="denied-card au1">
+      <span class="denied-icon">🚫</span>
+      <div class="denied-badge">Access Denied</div>
+      <div class="denied-title">Assessment Already Completed</div>
+      <div class="denied-sub">
+        You have already submitted this assessment.<br>
+        Each login session allows only one attempt.<br>
+        Please contact your administrator if you believe this is an error.
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:.5rem">Excel Mind<span
+          style="color:var(--gold)">Pulse</span> &mdash; Faculty Stress Assessment Portal</div>
+    </div>
+  </div>
+
+  <script>
+    /* ══ QUESTION ANIMATIONS & ICONS ══ */
+    const Q_ANIMATIONS = {
+      1: { icon: '🔍' }, 2: { icon: '👀' }, 3: { icon: '📊' }, 4: { icon: '🔥' }, 5: { icon: '🤔' },
+      6: { icon: '⏳' }, 7: { icon: '🤕' }, 8: { icon: '⚡' }, 9: { icon: '🔮' }, 10: { icon: '🧠' },
+      11: { icon: '🧘' }, 12: { icon: '🛡️' }, 13: { icon: '⚖️' }, 14: { icon: '🔋' }, 15: { icon: '🗣️' },
+      16: { icon: '🕊️' }, 17: { icon: '🌊' }, 18: { icon: '🛑' }, 19: { icon: '🌟' }, 20: { icon: '🎛️' },
+      21: { icon: '⚖️' }, 22: { icon: '☕' }, 23: { icon: '🔌' }, 24: { icon: '❤️' }, 25: { icon: '⏱️' },
+      26: { icon: '🚧' }, 27: { icon: '👨‍👩‍👧‍👦' }, 28: { icon: '🏠' }, 29: { icon: '🎨' }, 30: { icon: '😌' },
+      31: { icon: '🏃' }, 32: { icon: '🤝' }, 33: { icon: '☀️' }, 34: { icon: '🌬️' }, 35: { icon: '🦋' },
+      36: { icon: '🧘‍♀️' }, 37: { icon: '🧩' }, 38: { icon: '💡' }, 39: { icon: '🍵' }, 40: { icon: '📈' },
+      41: { icon: '🥀' }, 42: { icon: '📉' }, 43: { icon: '🥱' }, 44: { icon: '📦' }, 45: { icon: '🔋' },
+      46: { icon: '🌫️' }, 47: { icon: '💧' }, 48: { icon: '🛌' }, 49: { icon: '😤' }, 50: { icon: '💔' },
+    };
+
+    /* ══ SECTIONS DATA ══ */
+    const SECS = [
+      { id: 'A', name: 'Stress Awareness', color: '#4a8fe8', bg: 'rgba(74,143,232,.12)', icon: '🔍', img: 'assets/section-1-stress-management.png', qs: Array.from({ length: 10 }, (_, i) => i + 1), reverse: false },
+      { id: 'B', name: 'Emotional Management', color: '#3ec9a7', bg: 'rgba(62,201,167,.12)', icon: '💚', img: 'assets/section-2-emotional-management.png', qs: Array.from({ length: 10 }, (_, i) => i + 11), reverse: false },
+      { id: 'C', name: 'Work-Life Balance', color: '#d4a843', bg: 'rgba(212,168,67,.12)', icon: '⚖️', img: 'assets/section-3-work-life-balance.png', qs: Array.from({ length: 10 }, (_, i) => i + 21), reverse: false },
+      { id: 'D', name: 'Coping Strategies', color: '#9b6de8', bg: 'rgba(155,109,232,.12)', icon: '🛡️', img: 'assets/section-4-coping-strategies.png', qs: Array.from({ length: 10 }, (_, i) => i + 31), reverse: false },
+      { id: 'E', name: 'Burnout Indicators', color: '#e8624a', bg: 'rgba(232,98,74,.12)', icon: '⚠️', img: 'assets/section-5-burnout-indicators.png', qs: Array.from({ length: 10 }, (_, i) => i + 41), reverse: true },
+    ];
+
+    const OPTIONS = [
+      { t: 'Strongly Disagree', s: 1 },
+      { t: 'Disagree', s: 2 },
+      { t: 'Neutral', s: 3 },
+      { t: 'Agree', s: 4 },
+      { t: 'Strongly Agree', s: 5 },
+    ];
+
+    const QUESTIONS = [
+      // Section A - Stress Awareness
+      { id: 1, sec: 'A', text: 'I am aware of the major sources of stress in my work.' },
+      { id: 2, sec: 'A', text: 'I can identify when I start feeling stressed.' },
+      { id: 3, sec: 'A', text: 'I understand how stress affects my performance.' },
+      { id: 4, sec: 'A', text: 'I recognize early signs of burnout.' },
+      { id: 5, sec: 'A', text: 'I regularly reflect on my stress levels.' },
+      { id: 6, sec: 'A', text: 'I can differentiate between short-term stress and long-term stress.' },
+      { id: 7, sec: 'A', text: 'I notice physical signs of stress (headache, fatigue, etc.).' },
+      { id: 8, sec: 'A', text: 'I am aware of situations that trigger my stress instantly.' },
+      { id: 9, sec: 'A', text: 'I can predict stressful situations in advance.' },
+      { id: 10, sec: 'A', text: 'I understand how my thoughts influence my stress levels.' },
+      // Section B - Emotional Management
+      { id: 11, sec: 'B', text: 'I remain calm under pressure.' },
+      { id: 12, sec: 'B', text: 'I handle difficult situations without losing control.' },
+      { id: 13, sec: 'B', text: 'I feel emotionally balanced during work.' },
+      { id: 14, sec: 'B', text: 'I recover quickly after stressful situations.' },
+      { id: 15, sec: 'B', text: 'I express my emotions in a healthy way.' },
+      { id: 16, sec: 'B', text: 'I stay patient when dealing with challenging students or colleagues.' },
+      { id: 17, sec: 'B', text: 'I manage my anger or frustration effectively.' },
+      { id: 18, sec: 'B', text: 'I avoid overreacting in stressful situations.' },
+      { id: 19, sec: 'B', text: 'I maintain a positive attitude even during tough times.' },
+      { id: 20, sec: 'B', text: 'I am able to control my emotional responses consciously.' },
+      // Section C - Work-Life Balance
+      { id: 21, sec: 'C', text: 'I maintain a healthy balance between work and personal life.' },
+      { id: 22, sec: 'C', text: 'I take time to relax regularly.' },
+      { id: 23, sec: 'C', text: 'I can disconnect from work after working hours.' },
+      { id: 24, sec: 'C', text: 'I prioritize my well-being.' },
+      { id: 25, sec: 'C', text: 'I manage my time effectively.' },
+      { id: 26, sec: 'C', text: 'I set clear boundaries between my professional and personal life.' },
+      { id: 27, sec: 'C', text: 'I spend quality time with family and friends.' },
+      { id: 28, sec: 'C', text: 'I avoid taking work stress into my personal life.' },
+      { id: 29, sec: 'C', text: 'I schedule time for hobbies or personal interests.' },
+      { id: 30, sec: 'C', text: 'I feel satisfied with the balance between my work and personal commitments.' },
+      // Section D - Coping Strategies
+      { id: 31, sec: 'D', text: 'I use techniques like exercise, meditation, or hobbies to manage stress.' },
+      { id: 32, sec: 'D', text: 'I seek support when I feel stressed.' },
+      { id: 33, sec: 'D', text: 'I approach problems with a positive mindset.' },
+      { id: 34, sec: 'D', text: 'I use relaxation techniques when needed.' },
+      { id: 35, sec: 'D', text: 'I adapt well to changes in my work environment.' },
+      { id: 36, sec: 'D', text: 'I practice deep breathing or mindfulness during stressful moments.' },
+      { id: 37, sec: 'D', text: 'I break down problems into manageable steps.' },
+      { id: 38, sec: 'D', text: 'I look for solutions instead of focusing on problems.' },
+      { id: 39, sec: 'D', text: 'I take short breaks to refresh myself during work.' },
+      { id: 40, sec: 'D', text: 'I learn from stressful experiences to handle future challenges better.' },
+      // Section E - Burnout Indicators
+      { id: 41, sec: 'E', text: 'I feel emotionally exhausted due to my work.' },
+      { id: 42, sec: 'E', text: 'I feel less interested in my teaching responsibilities.' },
+      { id: 43, sec: 'E', text: 'I find it difficult to stay motivated at work.' },
+      { id: 44, sec: 'E', text: 'I feel overwhelmed by my workload.' },
+      { id: 45, sec: 'E', text: 'I feel mentally drained at the end of the day.' },
+      { id: 46, sec: 'E', text: 'I feel detached from my work or students.' },
+      { id: 47, sec: 'E', text: 'I feel that my efforts are not making a difference.' },
+      { id: 48, sec: 'E', text: 'I experience frequent fatigue even after rest.' },
+      { id: 49, sec: 'E', text: 'I feel irritable or frustrated at work.' },
+      { id: 50, sec: 'E', text: 'I feel like I am losing enthusiasm for my profession.' },
+    ];
+
+    // ══ OVERALL PROFILES ══
+    const PROFILES = [
+      {
+        min: 200, max: 250, label: 'Flourishing', color: '#3ec9a7',
+        profile: 'Highly resilient & thriving faculty',
+        interp: 'Faculty in this range demonstrate a high level of awareness and mastery over their stress. They are able to clearly identify stress triggers and respond to them in a calm, composed, and constructive manner. Their emotional stability allows them to handle challenges effectively without becoming overwhelmed. They maintain a healthy integration between their professional responsibilities and personal life, ensuring sustained well-being. Their consistent use of positive coping strategies not only supports their own performance but also positions them as role models for others in managing stress effectively.',
+        suggestions: [
+          'Continue and refine current practices',
+          'Mentor peers or junior faculty on stress management',
+          'Take leadership in well-being or faculty development initiatives',
+          'Explore advanced practices (mindfulness, reflective journaling, coaching others)'
+        ]
+      },
+      {
+        min: 150, max: 199, label: 'Stable', color: '#d4a843',
+        profile: 'Well-managed but with scope for growth',
+        interp: 'Faculty in this category are generally able to manage stress effectively in most situations, though there may be occasional fluctuations. They demonstrate a reasonable level of emotional control and are able to maintain balance during routine pressures. However, their work-life balance and coping strategies may not always be consistent, especially during peak demands. With some conscious effort and regular practice, they can further strengthen their resilience and move toward a more proactive and balanced approach to stress management.',
+        suggestions: [
+          'Strengthen consistency in stress management routines',
+          'Set clearer work-life boundaries',
+          'Build emotional regulation habits (pause-respond approach)',
+          'Integrate short daily recovery practices (breathing, reflection, breaks)'
+        ]
+      },
+      {
+        min: 100, max: 149, label: 'Vulnerable', color: '#e87a30',
+        profile: 'Managing but at risk',
+        interp: 'Faculty in this range experience noticeable stress across multiple areas of their professional and personal life. While they may attempt to manage their stress, their responses can sometimes be reactive rather than controlled. Emotional balance may fluctuate, and work-life boundaries may not be well maintained. Their coping strategies are often inconsistent, which can lead to increased strain over time. Without timely intervention, this level of stress may gradually impact their effectiveness, motivation, and overall well-being.',
+        suggestions: [
+          'Identify and address top stress triggers immediately',
+          'Practice daily relaxation techniques (5-10 minutes)',
+          'Improve time management and prioritization',
+          'Create a structured routine for self-care',
+          'Seek peer support when needed'
+        ]
+      },
+      {
+        min: 75, max: 99, label: 'Strained', color: '#e8624a',
+        profile: 'High stress & declining balance',
+        interp: 'Faculty falling in this category are likely experiencing high levels of stress that significantly affect their emotional and professional functioning. They may frequently feel overwhelmed, mentally fatigued, and unable to effectively manage pressures. Emotional responses may become more intense or difficult to regulate, and maintaining a healthy work-life balance becomes challenging. Their coping mechanisms may be limited or ineffective, leading to a cycle of stress and exhaustion. Immediate attention is needed to prevent further decline.',
+        suggestions: [
+          'Reduce overload and avoid over-commitment',
+          'Start simple stress-reduction habits (walking, breathing, digital detox)',
+          'Seek guidance from mentors or professional support',
+          'Take intentional breaks and recovery time',
+          'Rebuild boundaries between work and personal life'
+        ]
+      },
+      {
+        min: 50, max: 74, label: 'Burnout Risk', color: '#d32f2f',
+        profile: 'Emotionally exhausted & critical stage',
+        interp: 'Faculty in this range are at a critical stage of stress and burnout. They may feel emotionally drained, disengaged, and disconnected from their work and responsibilities. There is a significant decline in motivation, energy, and overall interest in teaching or professional roles. Stress at this level can impact both personal well-being and professional effectiveness. Immediate intervention is essential to support recovery and prevent long-term consequences on mental and physical health.',
+        suggestions: [
+          'Take immediate rest and recovery (leave, reduced workload if possible)',
+          'Seek professional counselling or psychological support',
+          'Focus on basic self-care (sleep, nutrition, physical movement)',
+          'Avoid isolation - connect with trusted colleagues or family',
+          'Gradually rebuild routine with small, manageable steps'
+        ]
+      },
+    ];
+
+    // ══ SECTION-WISE RECOMMENDATIONS ══
+    const SEC_RECO = {
+      A: {
+        low: {
+          label: 'Low (10-29) - Lack of Awareness',
+          items: [
+            'Maintain a daily stress journal (write what caused stress and how you felt)',
+            'Spend 5 minutes daily reflecting on your day',
+            'Identify your top 3 common stress triggers (people, tasks, situations)',
+            'Practice the "Pause & Observe" technique before reacting',
+            'Notice physical signs (headache, tiredness, irritation)',
+            'Set reminders to check your stress level 2-3 times a day'
+          ]
+        },
+        mod: {
+          label: 'Moderate (30-39) - Developing Awareness',
+          items: [
+            'Be consistent with reflection (daily or weekly)',
+            'Track patterns: When, where, and why stress occurs',
+            'Do a weekly self-review of stressful situations',
+            'Try rating your stress level (1-10) daily',
+            'Discuss stress triggers with a trusted colleague',
+            'Begin planning preventive actions for common stressors'
+          ]
+        },
+        high: {
+          label: 'High (40-50) - Strong Awareness',
+          items: [
+            'Start anticipating stress before it happens',
+            'Practice preventive stress management techniques',
+            'Help colleagues identify their stress triggers',
+            'Share your awareness practices in team discussions',
+            'Develop a personal stress management plan',
+            'Focus on long-term emotional balance strategies'
+          ]
+        }
+      },
+      B: {
+        low: {
+          label: 'Low (10-29) - Difficulty Managing Emotions',
+          items: [
+            'Practice deep breathing (4-4-4 technique) daily',
+            'Use the "Pause before response" habit',
+            'Label your emotions: "I feel stressed/angry/anxious"',
+            'Avoid reacting immediately - give yourself time',
+            'Step away briefly from stressful situations',
+            'Talk to someone instead of bottling emotions'
+          ]
+        },
+        mod: {
+          label: 'Moderate (30-39) - Improving Control',
+          items: [
+            'Increase mindfulness practice (5-10 minutes/day)',
+            'Observe emotional triggers and respond consciously',
+            'Practice positive self-talk during stress',
+            'Improve listening skills in difficult situations',
+            'Maintain a calm tone during discussions',
+            'Reflect after emotional situations: What went well?'
+          ]
+        },
+        high: {
+          label: 'High (40-50) - Strong Emotional Control',
+          items: [
+            'Handle conflicts calmly and act as a mediator',
+            'Mentor others on emotional control techniques',
+            'Use emotional intelligence in decision-making',
+            'Maintain consistency even under high pressure',
+            'Build a positive emotional climate in your team',
+            'Continue strengthening self-awareness and empathy'
+          ]
+        }
+      },
+      C: {
+        low: {
+          label: 'Low (10-29) - Poor Balance',
+          items: [
+            'Set clear work boundaries (fixed start/stop time)',
+            'Schedule personal time daily (non-negotiable)',
+            'Avoid taking work home whenever possible',
+            'Practice digital detox after work hours',
+            'Take short breaks during the day',
+            'Prioritize sleep, health, and family time'
+          ]
+        },
+        mod: {
+          label: 'Moderate (30-39) - Needs Improvement',
+          items: [
+            'Plan your day using time management tools',
+            'Balance work, family, and personal needs',
+            'Reduce unnecessary tasks and delegate when possible',
+            'Ensure at least one relaxation activity daily',
+            'Monitor how you spend your time weekly',
+            'Avoid over-commitment'
+          ]
+        },
+        high: {
+          label: 'High (40-50) - Healthy Balance',
+          items: [
+            'Maintain your daily routine consistently',
+            'Continue prioritizing well-being and self-care',
+            'Encourage colleagues to maintain balance',
+            'Share your time management practices',
+            'Regularly review and adjust your schedule',
+            'Focus on sustaining long-term balance'
+          ]
+        }
+      },
+      D: {
+        low: {
+          label: 'Low (10-29) - Limited Coping Skills',
+          items: [
+            'Start with simple techniques: deep breathing, walking, light exercise',
+            'Practice at least one technique daily',
+            'Talk to colleagues or friends when stressed',
+            'Take short breaks to relax your mind',
+            'Engage in hobbies (music, reading, etc.)',
+            'Avoid ignoring stress - address it early'
+          ]
+        },
+        mod: {
+          label: 'Moderate (30-39) - Developing Coping Skills',
+          items: [
+            'Practice techniques more regularly',
+            'Try new strategies like yoga or meditation',
+            'Combine physical and mental relaxation methods',
+            'Identify which techniques work best for you',
+            'Stay consistent even when stress is low',
+            'Learn stress management tools from others'
+          ]
+        },
+        high: {
+          label: 'High (40-50) - Strong Coping Ability',
+          items: [
+            'Refine and improve your coping techniques',
+            'Use different strategies based on the situation',
+            'Share effective methods with colleagues',
+            'Stay proactive in stress prevention',
+            'Maintain physical and mental fitness routines',
+            'Build resilience for long-term challenges'
+          ]
+        }
+      },
+      E: {
+        low: {
+          label: 'Low (10-29) - High Burnout Risk (Needs Immediate Action)',
+          items: [
+            'Take immediate rest breaks or short leave',
+            'Reduce workload temporarily if possible',
+            'Seek support from colleagues or professionals',
+            'Prioritize sleep and relaxation',
+            'Avoid overworking - say no when needed',
+            'Start small recovery practices daily'
+          ]
+        },
+        mod: {
+          label: 'Moderate (30-39) - Early Signs of Burnout',
+          items: [
+            'Improve recovery habits (sleep, relaxation)',
+            'Take regular breaks during work',
+            'Engage in activities that refresh you',
+            'Maintain a positive support system',
+            'Monitor stress levels regularly',
+            'Prevent stress from increasing further'
+          ]
+        },
+        high: {
+          label: 'High (40-50) - Low Burnout Risk',
+          items: [
+            'Maintain your current energy levels',
+            'Continue practicing healthy routines',
+            'Stay alert to early warning signs',
+            'Support others facing burnout',
+            'Focus on long-term well-being',
+            'Keep balancing workload effectively'
+          ]
+        }
+      },
+    };
+
+    /* ══ STATE ══ */
+    let user = {}, gender = '', shuffledQs = [], currentIdx = 0, answers = {};
+
+    /* ══ SESSION LOCK ══ */
+    (function initSessionGuard() {
+      const status = sessionStorage.getItem('mp_status');
+      if (status === 'done') {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('screen-denied').classList.add('active');
+      }
+      if (status === 'quiz_started') {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('screen-denied').classList.add('active');
+      }
+    })();
+
+    /* ══ UTILS ══ */
+    function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); window.scrollTo(0, 0) }
+    function pct(s, m) { return Math.min(100, Math.round((s / m) * 100)) }
+    function getProfile(total) { return PROFILES.find(p => total >= p.min && total <= p.max) || PROFILES[PROFILES.length - 1] }
+    function getSecBand(score) { return score >= 40 ? 'high' : score >= 30 ? 'mod' : 'low' }
+    function shuffleArray(array) {
+      const shuffled = [...array];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    }
+
+    /* ══ AUTH ══ */
+    function togglePass() { const i = document.getElementById('auth-pass'); i.type = i.type === 'password' ? 'text' : 'password' }
+    function doAuth() {
+      const u = document.getElementById('auth-user').value.trim();
+      const p = document.getElementById('auth-pass').value;
+      const err = document.getElementById('auth-err');
+      if (u === 'user123' && p === '90143514') { err.style.display = 'none'; sessionStorage.setItem('mp_status', 'authed'); showScreen('screen-login') }
+      else { err.style.display = 'block' }
+    }
+
+    /* ══ USER DETAILS ══ */
+    function calculateAge(dobString) {
+      // Parse DOB in DD/MM/YYYY format
+      const parts = dobString.split('/');
+      if (parts.length !== 3) return null;
+      const day = parseInt(parts[0]);
+      const month = parseInt(parts[1]);
+      const year = parseInt(parts[2]);
+
+      // Validate date
+      if (day < 1 || day > 31 || month < 1 || month > 12 || year < 1900) return null;
+
+      const dob = new Date(year, month - 1, day);
+      const today = new Date();
+      let age = today.getFullYear() - dob.getFullYear();
+      const monthDiff = today.getMonth() - dob.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+        age--;
+      }
+      return age;
+    }
+
+    function updateAge() {
+      const dobField = document.getElementById('inp-dob');
+      const ageField = document.getElementById('inp-age');
+      const dobValue = dobField.value.trim();
+
+      if (dobValue) {
+        const age = calculateAge(dobValue);
+        if (age !== null && age >= 18 && age <= 80) {
+          ageField.value = age;
+        } else {
+          ageField.value = '';
+        }
+      } else {
+        ageField.value = '';
+      }
+    }
+
+    // Attach event listener to DOB field and setup error clearing
+    document.addEventListener('DOMContentLoaded', () => {
+      const dobField = document.getElementById('inp-dob');
+      if (dobField) {
+        dobField.addEventListener('change', updateAge);
+        dobField.addEventListener('blur', updateAge);
+      }
+
+      // Setup error clearing on input/change for all form fields
+      const inputFields = ['inp-name', 'inp-dob', 'inp-age', 'inp-college', 'inp-dept'];
+      const errorMap = {
+        'inp-name': 'err-name',
+        'inp-dob': 'err-dob',
+        'inp-age': 'err-age',
+        'inp-college': 'err-college',
+        'inp-dept': 'err-dept'
+      };
+
+      inputFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+          const eventType = fieldId === 'inp-college' ? 'change' : 'input';
+
+          // Clear error on change
+          field.addEventListener(eventType, () => {
+            field.classList.remove('has-error');
+            const errorId = errorMap[fieldId];
+            if (errorId) {
+              const errorEl = document.getElementById(errorId);
+              if (errorEl) errorEl.style.display = 'none';
+            }
+          });
+
+          // Handle label color for select element
+          if (fieldId === 'inp-college') {
+            field.addEventListener('focus', () => {
+              const label = field.closest('.form-group').querySelector('label');
+              if (label) label.style.color = 'var(--gold)';
+            });
+            field.addEventListener('blur', () => {
+              const label = field.closest('.form-group').querySelector('label');
+              if (label && !field.value) label.style.color = 'var(--text2)';
+            });
+            field.addEventListener('change', () => {
+              const label = field.closest('.form-group').querySelector('label');
+              if (label && field.value) label.style.color = 'var(--gold)';
+
+              // Handle Others option
+              const otherInput = document.getElementById('inp-college-other');
+              if (field.value === 'Others') {
+                otherInput.style.display = 'block';
+                otherInput.focus();
+              } else {
+                otherInput.style.display = 'none';
+                otherInput.value = '';
+                otherInput.classList.remove('has-error');
+              }
+            });
+          }
+        }
+      });
+    });
+
+    // Add event listener for custom college input
+    document.addEventListener('DOMContentLoaded', () => {
+      const otherInput = document.getElementById('inp-college-other');
+      if (otherInput) {
+        otherInput.addEventListener('input', () => {
+          otherInput.classList.remove('has-error');
+          const errorEl = document.getElementById('err-college');
+          if (errorEl) errorEl.style.display = 'none';
+        });
+      }
+    });
+
+    function pickGender(btn, val) { document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('sel')); btn.classList.add('sel'); gender = val }
+    function submitLogin() {
+      let ok = true;
+      const name = document.getElementById('inp-name').value.trim();
+      const dob = document.getElementById('inp-dob').value.trim();
+      const age = parseInt(document.getElementById('inp-age').value);
+      const collegeSelect = document.getElementById('inp-college').value.trim();
+      const collegeOther = document.getElementById('inp-college-other').value.trim();
+      const college = collegeSelect === 'Others' ? collegeOther : collegeSelect;
+      const dept = document.getElementById('inp-dept').value.trim();
+      const se = (id, show) => { document.getElementById(id).style.display = show ? 'block' : 'none' };
+      const setErr = (id, inputId, hasError) => {
+        se(id, hasError);
+        if (inputId) document.getElementById(inputId).classList.toggle('has-error', hasError);
+      };
+      setErr('err-name', 'inp-name', !name); if (!name) ok = false;
+      setErr('err-dob', 'inp-dob', !dob); if (!dob) ok = false;
+      setErr('err-age', 'inp-age', isNaN(age) || age < 18 || age > 80); if (isNaN(age) || age < 18 || age > 80) ok = false;
+      setErr('err-gender', null, !gender); if (!gender) ok = false;
+
+      // Handle college validation
+      const collegeHasError = !college;
+      if (collegeHasError) {
+        document.getElementById('err-college').style.display = 'block';
+        document.getElementById('inp-college').classList.toggle('has-error', true);
+        if (collegeSelect === 'Others') {
+          document.getElementById('inp-college-other').classList.add('has-error');
+        }
+      } else {
+        document.getElementById('err-college').style.display = 'none';
+        document.getElementById('inp-college').classList.remove('has-error');
+        document.getElementById('inp-college-other').classList.remove('has-error');
+      }
+      if (collegeHasError) ok = false;
+
+      setErr('err-dept', 'inp-dept', !dept); if (!dept) ok = false;
+      if (!ok) return;
+      user = { name, age, dob, gender, college, dept };
+      startQuiz();
+    }
+
+    /* ══ QUIZ ══ */
+    function startQuiz() {
+      sessionStorage.setItem('mp_status', 'quiz_started');
+      const randomizedQuestions = shuffleArray(QUESTIONS);
+      shuffledQs = randomizedQuestions.map(q => ({ ...q, opts: [...OPTIONS] }));
+      currentIdx = 0; answers = {};
+      showScreen('screen-quiz');
+      buildSlides();
+      goToSlide(0, 'none');
+    }
+
+    function buildSlides() {
+      const vp = document.getElementById('slide-viewport'); vp.innerHTML = '';
+      const L = ['A', 'B', 'C', 'D', 'E'];
+      shuffledQs.forEach((q, i) => {
+        const sec = SECS.find(s => s.id === q.sec);
+        const icon = Q_ANIMATIONS[q.id]?.icon || '✨';
+        const slide = document.createElement('div'); slide.className = 'slide'; slide.id = 'slide-' + i;
+        const optsHtml = q.opts.map((opt, oi) => `
+      <button class="opt-btn" id="opt-${i}-${oi}" onclick="pickOpt(${i},${oi},${opt.s},event)">
+        <span class="mk">${L[oi]}</span><span>${opt.t}</span>
+      </button>`).join('');
+        slide.innerHTML = `
+      <div class="slide-card" style="border-top:3px solid ${sec.color}">
+        <div class="slide-illus">${icon}</div>
+        <div class="q-text">${q.text}</div>
+        <div class="opts">${optsHtml}</div>
+      </div>`;
+        vp.appendChild(slide);
+      });
+    }
+
+    function goToSlide(idx, dir) {
+      const total = shuffledQs.length;
+      const prev = document.querySelector('.slide.active');
+      if (prev && dir !== 'none') { prev.classList.remove('active'); prev.classList.add('exit-left'); setTimeout(() => prev.classList.remove('exit-left'), 420) }
+      else if (prev) { prev.classList.remove('active') }
+      currentIdx = idx;
+      const slide = document.getElementById('slide-' + idx);
+      if (dir === 'back') { slide.style.transform = 'translateX(-50px)'; requestAnimationFrame(() => { slide.style.transition = 'opacity .38s ease,transform .38s ease'; slide.classList.add('active'); slide.style.transform = '' }) }
+      else { slide.classList.add('active') }
+      const q = shuffledQs[idx];
+      if (answers[q.id] !== undefined) {
+        q.opts.forEach((opt, oi) => {
+          const btn = document.getElementById(`opt-${idx}-${oi}`); if (!btn) return;
+          const s = opt.s === answers[q.id]; btn.classList.toggle('sel', s);
+          const mk = btn.querySelector('.mk'); if (mk) { mk.style.background = s ? 'var(--gold)' : ''; mk.style.borderColor = s ? 'var(--gold)' : ''; mk.style.color = s ? '#07080d' : '' }
+        });
+      }
+      const p = Math.round(((idx + 1) / total) * 100);
+      document.getElementById('prog-fill').style.width = p + '%';
+      document.getElementById('prog-pct').textContent = p + '%';
+    }
+
+    function pickOpt(slideIdx, optIdx, score, ev) {
+      const q = shuffledQs[slideIdx];
+      answers[q.id] = score;
+      if (ev) { const btn = ev.currentTarget; const r = document.createElement('span'); r.className = 'opt-ripple'; const rect = btn.getBoundingClientRect(); r.style.left = (ev.clientX - rect.left - 10) + 'px'; r.style.top = (ev.clientY - rect.top - 10) + 'px'; btn.appendChild(r); setTimeout(() => r.remove(), 600) }
+      shuffledQs[slideIdx].opts.forEach((_, oi) => {
+        const b = document.getElementById(`opt-${slideIdx}-${oi}`); if (!b) return;
+        const s = oi === optIdx; b.classList.toggle('sel', s);
+        const mk = b.querySelector('.mk'); if (mk) { mk.style.background = s ? 'var(--gold)' : ''; mk.style.borderColor = s ? 'var(--gold)' : ''; mk.style.color = s ? '#07080d' : '' }
+      });
+      if (slideIdx < shuffledQs.length - 1) { setTimeout(() => { if (answers[q.id] !== undefined) goToSlide(slideIdx + 1, 'forward') }, 480) }
+      else { setTimeout(() => buildReport(), 500) }
+    }
+
+    /* ══ SCORE CALCULATION ══ */
+    function calcScores() {
+      const raw = {};
+      SECS.forEach(s => { raw[s.id] = 0 });
+      QUESTIONS.forEach(q => {
+        if (answers[q.id] === undefined) return;
+        const sec = SECS.find(s => s.id === q.sec);
+        const score = sec.reverse ? (6 - answers[q.id]) : answers[q.id];
+        raw[q.sec] += score;
+      });
+      return raw;
+    }
+
+    /* ══ REPORT ══ */
+    function buildReport() {
+      sessionStorage.setItem('mp_status', 'done');
+      showScreen('screen-report');
+      const secScores = calcScores();
+      const total = Object.values(secScores).reduce((a, b) => a + b, 0);
+      const totalPct = pct(total, 250);
+      const prof = getProfile(total);
+
+      try { localStorage.setItem('mp_last', JSON.stringify({ secScores, total, totalPct, label: prof.label, date: new Date().toISOString() })) } catch (e) { }
+      window._reportData = { secScores, total, totalPct, prof };
+      setTimeout(() => downloadReport(), 250);
+    }
+
+    const BACKEND_URL = "http://localhost:3000";
+
+    /* ══ 2-PAGE PDF DOWNLOAD ══ */
+    async function downloadReport() {
+      const d = window._reportData; if (!d) { alert('Report data unavailable. Please complete the assessment first.'); return }
+      const pdfModule = window.jspdf || window.jsPDF || (window.jspdf && window.jspdf.default) || (window.jsPDF && window.jsPDF.default);
+      const jsPDF = typeof pdfModule === 'function' ? pdfModule : (pdfModule && ((pdfModule.jsPDF || pdfModule.default) || pdfModule));
+      if (!jsPDF) { console.error('jsPDF module missing', window.jspdf, window.jsPDF); alert('PDF library failed to load. Please refresh the page.'); return }
+      try {
+        const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+        const W = 210, H = 297;
+        const date = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+        const dob = user.dob ? new Date(user.dob).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : '-';
+
+        // ── helpers ──
+        const h2r = h => { const r = parseInt(h.slice(1, 3), 16), g = parseInt(h.slice(3, 5), 16), b = parseInt(h.slice(5, 7), 16); return [r, g, b] };
+        const pdfText = v => String(v ?? '').normalize('NFKD').replace(/[^\x20-\x7E]/g, '').replace(/\s+/g, ' ').trim();
+        const sf = (style, size, color) => { doc.setFont('helvetica', style); doc.setFontSize(size); doc.setTextColor(...(color || [43, 51, 64])) };
+        const tx = (str, x, y, opt) => doc.text(Array.isArray(str) ? str.map(pdfText) : pdfText(str), x, y, opt || {});
+        const ln = (x1, y1, x2, y2, col, lw) => { doc.setDrawColor(...(col || [40, 44, 58])); doc.setLineWidth(lw || 0.3); doc.line(x1, y1, x2, y2) };
+        const fillRect = (x, y, w, h, col) => { doc.setFillColor(...col); doc.rect(x, y, w, h, 'F') };
+        const rndRect = (x, y, w, h, col, scol) => { if (col) doc.setFillColor(...col); if (scol) doc.setDrawColor(...scol); else doc.setDrawColor(...(col || [15, 17, 24])); doc.roundedRect(x, y, w, h, 2, 2, col && scol ? 'FD' : col ? 'F' : 'S') };
+
+        const hBar = (x, y, val, max, w, col) => { doc.setFillColor(232, 237, 244); doc.roundedRect(x, y, w, 3, 1.5, 1.5, 'F'); if (val > 0) { doc.setFillColor(...h2r(col)); doc.roundedRect(x, y, (w * val / max), 3, 1.5, 1.5, 'F') } };
+
+        const pill = (txt, x, y, col) => { const rgb = h2r(col); const safeTxt = pdfText(txt); const tw = doc.getTextWidth(safeTxt) + 8; const bg = [Math.round(rgb[0] * 0.15 + 255 * 0.85), Math.round(rgb[1] * 0.15 + 255 * 0.85), Math.round(rgb[2] * 0.15 + 255 * 0.85)]; doc.setFillColor(...bg); doc.roundedRect(x, y - 3.5, tw, 5.5, 2.5, 2.5, 'F'); doc.setDrawColor(...rgb); doc.setLineWidth(0.25); doc.roundedRect(x, y - 3.5, tw, 5.5, 2.5, 2.5, 'S'); doc.setTextColor(...rgb); doc.setFontSize(7); doc.setFont('helvetica', 'bold'); tx(safeTxt, x + 4, y, { baseline: 'middle' }) };
+        const loadPdfImg = src => new Promise(resolve => { const img = new Image(); img.onload = () => resolve(img); img.onerror = () => resolve(null); img.src = src });
+
+        /* ════ PAGE 1 ════ */
+        const uniBannerSrc = 'assets/Excel.jpeg';
+        const uniBanner = await loadPdfImg(uniBannerSrc);
+        const headerY = uniBanner ? 31 : 0;
+
+        fillRect(0, 0, W, H, [246, 248, 252]);
+        if (uniBanner) {
+          const ar = (uniBanner.width && uniBanner.height) ? (uniBanner.width / uniBanner.height) : 4.5;
+          let bw = W - 24, bh = bw / ar;
+          if (bh > 24) { bh = 24; bw = bh * ar }
+          doc.addImage(uniBanner, 'PNG', (W - bw) / 2, 4, bw, bh, undefined, 'FAST');
+        }
+        fillRect(0, headerY, W, 22, [31, 41, 55]);
+        fillRect(0, headerY + 22, W, 0.8, [212, 168, 67]);
+        sf('bold', 14, [238, 234, 224]); tx('Excel Mind', 12, headerY + 13);
+        sf('bold', 14, [212, 168, 67]); tx('Pulse', 12 + doc.getTextWidth('Excel Mind'), headerY + 13);
+        sf('bold', 14, [238, 234, 224]);
+        sf('normal', 8, [185, 192, 203]); tx('Faculty Stress Assessment Report', 12, headerY + 19);
+        sf('normal', 8, [185, 192, 203]); tx('Date: ' + date, 90, headerY + 19);
+
+        const init = user.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+        doc.setFillColor(43, 39, 32); doc.setDrawColor(212, 168, 67); doc.setLineWidth(0.5); doc.circle(W - 16, headerY + 11, 7, 'FD');
+        sf('bold', 8, [212, 168, 67]); tx(init, W - 16, headerY + 11.5, { align: 'center' });
+
+        let y = headerY + 28;
+
+        // ── User Details block ──
+        rndRect(12, y, W - 24, 30, [255, 255, 255], [217, 224, 234]);
+        sf('bold', 7.5, [108, 120, 138]); tx('PARTICIPANT DETAILS', 16, y + 5.5);
+        ln(12, y + 8, W - 12, y + 8, [226, 232, 240], 0.3);
+        const fields = [['Name', user.name], ['Age', String(user.age)], ['Gender', user.gender], ['DOB', dob], ['Institution', user.college], ['Department', user.dept]];
+        fields.forEach((f, i) => {
+          const col = i % 3; const row = Math.floor(i / 3);
+          const fx = [16, 78, 140][col]; const fy = y + 13 + row * 10;
+          sf('bold', 7, [108, 120, 138]); tx(f[0], fx, fy);
+          sf('normal', 8.5, [43, 51, 64]); tx(f[1], fx, fy + 4.5);
+        });
+        y += 28;
+
+        // ── Stress Level Indicators row — dot + label grouped & centred together ──
+        const indicators = [
+          { label: '80%-100%', desc: 'Perfect in Managing Stress', col: '#3ec9a7' },
+          { label: '60%-79%', desc: 'Manageable Stress', col: '#4a8fe8' },
+          { label: '40%-59%', desc: 'Facing Stress', col: '#d4a843' },
+          { label: '30%-39%', desc: 'High Stress', col: '#e8624a' },
+          { label: '20%-29%', desc: 'Burnout Risk', col: '#d32f2f' },
+        ];
+
+        // ── Overall Score block ──
+        // Determine ring color based on percentage level
+        let ringColor = d.prof.color;
+        if (d.totalPct >= 80) ringColor = '#3ec9a7';      // 80%-100%
+        else if (d.totalPct >= 60) ringColor = '#4a8fe8'; // 60%-79%
+        else if (d.totalPct >= 40) ringColor = '#d4a843'; // 40%-59%
+        else if (d.totalPct >= 30) ringColor = '#e8624a'; // 30%-39%
+        else ringColor = '#d32f2f';                         // 20%-29%
+
+        const prgColor = ringColor; const rgb = h2r(prgColor);
+        const interpLines = doc.splitTextToSize(pdfText(d.prof.interp), W - 44);
+        const interpSlice = interpLines;
+        const overallBlockH = 8 + 9 + 2 + 42 + 12 + (interpSlice.length * 5) + 8;
+        y += 4;
+        rndRect(12, y, W - 24, overallBlockH, [255, 255, 255], [217, 224, 234]);
+        sf('bold', 7.5, [108, 120, 138]); tx('OVERALL RESULT', 16, y + 5.5);
+        ln(12, y + 8, W - 12, y + 8, [226, 232, 240], 0.3);
+        const indY = y + 11;
+        const slotW = (W - 24) / indicators.length;
+
+        indicators.forEach((ind, ii) => {
+          const ix = 12 + ii * slotW + slotW / 2;
+          const indRgb = h2r(ind.col);
+          // Measure label width so dot + label can be centred as one group
+          sf('bold', 6, indRgb);
+          const labelW = doc.getTextWidth(pdfText(ind.label));
+          const dotR = 1.2;
+          const gap = 1.5;  // gap between dot right-edge and text left-edge
+          const groupW = dotR * 2 + gap + labelW;
+          const groupStartX = ix - groupW / 2;
+          // Draw dot: vertically centred on text baseline (6pt text cap ~1.5mm above baseline)
+          doc.setFillColor(...indRgb);
+          doc.circle(groupStartX + dotR, indY - 0.5, dotR, 'F');
+          // Draw label starting right after the dot
+          tx(ind.label, groupStartX + dotR * 2 + gap, indY, {});
+          // Description line below, still centred on the slot
+          sf('normal', 5.5, [100, 110, 125]);
+          tx(ind.desc, ix, indY + 4.5, { align: 'center' });
+        });
+
+        ln(12, y + 21, W - 12, y + 21, [226, 232, 240], 0.3);
+
+        // ── Circular chart ──
+        const cx = W / 2, cy = y + 43, r = 18;
+        doc.setDrawColor(226, 232, 240); doc.setLineWidth(4); doc.circle(cx, cy, r, 'S');
+        doc.setDrawColor(...rgb); doc.setLineWidth(4);
+        const steps = Math.max(1, Math.round(d.totalPct / 100 * 360 / 3));
+        for (let i = 0; i < steps; i++) { const a1 = (-90 + i * 3) * Math.PI / 180; const a2 = (-90 + (i + 1) * 3) * Math.PI / 180; doc.line(cx + r * Math.cos(a1), cy + r * Math.sin(a1), cx + r * Math.cos(a2), cy + r * Math.sin(a2)) }
+        sf('bold', 16, rgb); tx(d.totalPct + '%', cx, cy + 2, { align: 'center' });
+        sf('normal', 7, [120, 131, 148]); tx('Overall Score', cx, cy + 8, { align: 'center' });
+
+        // ── Pill + profile label + interpretation ──
+        const textY = y + 67;
+        const pillW = doc.getTextWidth(pdfText(d.prof.label)) + 8;
+        pill(d.prof.label, (W - pillW) / 2, textY, prgColor);
+        sf('bold', 8.5, rgb); tx(d.prof.profile, W / 2, textY + 7, { align: 'center' });
+        sf('normal', 7, [100, 110, 125]);
+        interpSlice.forEach((l, i) => { tx(l, W / 2, textY + 13 + i * 5, { align: 'center' }) });
+
+        y += overallBlockH + 2;
+
+        // ── Suggestions ──
+        const sugRows = d.prof.suggestions;
+        const sugHeight = 8 + sugRows.length * 6 + 4;
+        rndRect(12, y, W - 24, sugHeight, [255, 255, 255], [217, 224, 234]);
+        sf('bold', 7.5, [212, 168, 67]); tx('SUGGESTIONS', 16, y + 5.5);
+        ln(12, y + 8, W - 12, y + 8, [226, 232, 240], 0.3);
+        sugRows.forEach((s, i) => {
+          doc.setFillColor(...rgb); doc.circle(18, y + 13 + i * 6, 1, 'F');
+          sf('normal', 8, [82, 93, 110]); tx(s, 22, y + 13.5 + i * 6);
+        });
+        y += sugHeight + 2;
+
+        // ── CATEGORY-WISE ANALYSIS BLOCK ──
+        const catBlockH = 10 + (SECS.length * 6) + 6;
+        rndRect(12, y, W - 24, catBlockH, [255, 255, 255], [217, 224, 234]);
+        sf('bold', 7.5, [108, 120, 138]); tx('CATEGORY-WISE ANALYSIS', 16, y + 5.5);
+        ln(12, y + 8, W - 12, y + 8, [226, 232, 240], 0.3);
+
+        const barAreaX = 12 + 4;
+        const nameColW = 52;
+        const scoreColW = 16;
+        const barW = (W - 24) - nameColW - scoreColW - 12;
+        const barX = barAreaX + nameColW;
+        const scoreX = barX + barW + 4;
+
+        SECS.forEach((sec, i) => {
+          const score = d.secScores[sec.id];
+          const pctVal = pct(score, 50);
+          const rowY = y + 13 + i * 6;
+          const secRgb = h2r(sec.color);
+
+          doc.setFillColor(...secRgb);
+          doc.circle(barAreaX + 2, rowY + 1, 1.2, 'F');
+          sf('bold', 7.5, secRgb);
+          tx(sec.id + ': ' + sec.name, barAreaX + 6, rowY + 1.5);
+
+          hBar(barX, rowY - 1.5, score, 50, barW, sec.color);
+
+          sf('bold', 6.5, [255, 255, 255]);
+          const fillLen = (barW * score / 50);
+          // if (fillLen > 8) {
+          //   tx(pctVal + '%', barX + fillLen / 2, rowY + 1, { align: 'center' });
+          // }
+
+          sf('bold', 7.5, secRgb);
+          tx(pctVal + '%', scoreX + scoreColW - 2, rowY + 1.5, { align: 'right' });
+        });
+
+        y += catBlockH + 4;
+
+        // ── footer p1 ──
+        fillRect(0, H - 10, W, 8, [240, 243, 248]);
+        sf('normal', 6.5, [124, 135, 151]); tx('Excel MindPulse Psychometric Assessment - Confidential - Page 1 of 2', W / 2, H - 3, { align: 'center' });
+
+        /* ════ PAGE 2 ════ */
+        doc.addPage();
+        fillRect(0, 0, W, H, [246, 248, 252]);
+        fillRect(0, 0, W, 22, [31, 41, 55]);
+        fillRect(0, 22, W, 0.8, [212, 168, 67]);
+        sf('bold', 12, [238, 234, 224]); tx('Excel Mind', 12, 13);
+        sf('bold', 12, [212, 168, 67]); tx('Pulse', 12 + doc.getTextWidth('Excel Mind'), 13);
+        sf('normal', 8, [185, 192, 203]); tx('Category-wise Recommendations', 12, 19);
+        sf('normal', 8, [185, 192, 203]); tx(user.name + ' - ' + date, W - 12, 19, { align: 'right' });
+
+        y = 28;
+
+        const LINE_H = 3.4;
+        const RECO_INDENT = 10;
+        const BULLET_X_OFFSET = 7.5;
+
+        for (let si = 0; si < SECS.length; si++) {
+          const sec = SECS[si];
+          const score = d.secScores[sec.id];
+          const p2 = pct(score, 50);
+          const band = getSecBand(score);
+          const reco = SEC_RECO[sec.id][band];
+          const badgeTxt = band === 'high' ? 'High' : band === 'mod' ? 'Moderate' : 'Low';
+          const badgeCol = band === 'high' ? '#3ec9a7' : band === 'mod' ? '#d4a843' : '#e8624a';
+
+          const mediaW = (W - 24) * 0.22;
+          const detailsW = (W - 24) - mediaW;
+          const textMaxW = detailsW - RECO_INDENT - 6;
+
+          let totalRecoLines = 0;
+          const recoLineBlocks = [];
+          for (let ri = 0; ri < reco.items.length; ri++) {
+            const lines = doc.splitTextToSize(pdfText(reco.items[ri]), textMaxW);
+            recoLineBlocks.push(lines);
+            totalRecoLines += lines.length;
+          }
+
+          const itemGapTotal = reco.items.length * 1.0;
+          const recoContentH = totalRecoLines * LINE_H + itemGapTotal;
+          const CARD_H = 3 + 5 + 5 + 5 + recoContentH + 3;
+
+          const mediaX = 12;
+          const detailsX = 12 + mediaW;
+          const secRgb = h2r(sec.color);
+
+          rndRect(12, y, W - 24, CARD_H, [255, 255, 255], [217, 224, 234]);
+
+          const secImg = await loadPdfImg(sec.img);
+          if (secImg) {
+            try { doc.addImage(secImg, 'PNG', mediaX + 1, y + 1, mediaW - 2, CARD_H - 2, undefined, 'FAST') } catch (e) { }
+          } else {
+            fillRect(mediaX + 1, y + 1, mediaW - 2, CARD_H - 2, [235, 239, 245]);
+            sf('bold', 8, secRgb); tx(sec.id, mediaX + (mediaW / 2), y + (CARD_H / 2), { align: 'center' });
+          }
+
+          fillRect(detailsX, y, 2.5, CARD_H, secRgb);
+
+          sf('bold', 8.5, secRgb);
+          tx(sec.name, detailsX + 5, y + 5);
+
+          const bpill = pdfText(badgeTxt + ' - ' + p2 + '%' + ' \n ' + reco.label);
+          const bpillW = doc.getTextWidth(bpill) + 8;
+          pill(badgeTxt + ' - ' + p2 + '%' + reco.label, detailsX + detailsW - bpillW - 2, y + 4.5, badgeCol);
+
+          sf('bold', 7, [212, 168, 67]);
+          tx('Recommendations:', detailsX + 5, y + 13);
+
+          let recoY = y + 19;
+          for (let ri = 0; ri < recoLineBlocks.length; ri++) {
+            const lines = recoLineBlocks[ri];
+            doc.setFillColor(...secRgb);
+            doc.circle(detailsX + BULLET_X_OFFSET, recoY - 0.7, 0.8, 'F');
+            sf('normal', 7, [50, 60, 75]);
+            tx(lines, detailsX + RECO_INDENT, recoY);
+            recoY += lines.length * LINE_H + 1.0;
+          }
+
+          y += CARD_H + 2;
+        }
+
+        sf('normal', 7, [50, 60, 75]); tx('For any further clarification or counselling sessions contact: Dr. Naveen P Y, Head - SSELD, 90143 51423, 99595 90826', 12, H - 12);
+
+        fillRect(0, H - 8, W, 8, [240, 243, 248]);
+        sf('normal', 6.5, [124, 135, 151]); tx('Excel MindPulse Psychometric Assessment - Confidential - Page 2 of 2', W / 2, H - 3, { align: 'center' });
+
+        const filename = 'excel-mindpulse-report-' + user.name.replace(/\s+/g, '-').toLowerCase() + '.pdf';
+        try {
+          doc.save(filename);
+          await sendReportToAdmin(doc, d);
+        } catch (saveErr) {
+          try {
+            const blob = doc.output('blob');
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+          } catch (blobErr) {
+            console.error('PDF download failed', saveErr, blobErr);
+            alert('PDF download failed. Please open the browser console for details.');
+          }
+        }
+      } catch (err) {
+        console.error('PDF generation failed', err);
+        alert('PDF generation failed. Please open the browser console for details.');
+      }
+    }
+    async function sendReportToAdmin(doc, reportData) {
+      try {
+        // Convert jsPDF document to a Blob
+        const pdfBlob = doc.output("blob");
+
+        // Build FormData — attach the PDF + metadata
+        const formData = new FormData();
+        formData.append("pdf", pdfBlob, "mindpulse-report.pdf");
+        formData.append("userName",    user.name         || "");
+        formData.append("userEmail",   user.email        || ""); // add if you collect it
+        formData.append("score",       reportData.totalPct + "%");
+        formData.append("institution", user.college      || "");
+        formData.append("department",  user.dept         || "");
+
+        // POST to the backend
+        const response = await fetch(`${BACKEND_URL}/send-report`, {
+          method: "POST",
+          body: formData,
+          // Do NOT set Content-Type — the browser sets it with the boundary automatically
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          console.log("✅ Report emailed to admin. Email ID:", result.emailId);
+          // Optionally show a toast / notification to the user here
+        } else {
+          console.warn("⚠️ Backend could not send the report email:", result.error);
+        }
+      } catch (networkErr) {
+        // Non-blocking — the user already got their PDF download, so just log it
+        console.warn("⚠️ Could not reach report-email backend:", networkErr.message);
+      }
+    }
+
+  </script>
+</body>
+
+</html>
