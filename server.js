@@ -42,6 +42,8 @@ app.use(
 
 app.use(express.json());
 
+app.use(express.static("public"));
+
 // ─── Multer — keep PDF in memory (no disk writes needed) ─────────────────────
 const upload = multer({
   storage: multer.memoryStorage(),

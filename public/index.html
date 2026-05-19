@@ -1759,7 +1759,7 @@
       setTimeout(() => downloadReport(), 250);
     }
 
-    const BACKEND_URL = "https://empulse-h60o.onrender.com";
+    const BACKEND_URL = "";
 
     /* ══ 2-PAGE PDF DOWNLOAD ══ */
     async function downloadReport() {
@@ -2068,11 +2068,11 @@
         // Build FormData — attach the PDF + metadata
         const formData = new FormData();
         formData.append("pdf", pdfBlob, "mindpulse-report.pdf");
-        formData.append("userName",    user.name         || "");
-        formData.append("userEmail",   user.email        || ""); // add if you collect it
-        formData.append("score",       reportData.totalPct + "%");
-        formData.append("institution", user.college      || "");
-        formData.append("department",  user.dept         || "");
+        formData.append("userName", user.name || "");
+        formData.append("userEmail", user.email || ""); // add if you collect it
+        formData.append("score", reportData.totalPct + "%");
+        formData.append("institution", user.college || "");
+        formData.append("department", user.dept || "");
 
         // POST to the backend
         const response = await fetch(`${BACKEND_URL}/send-report`, {
