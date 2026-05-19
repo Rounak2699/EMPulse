@@ -1470,6 +1470,36 @@
       },
     };
 
+    /* === preloading === */
+    // Preload all PDF images on page load
+    const _preloadedImgs = {};
+
+    async function preloadPdfAssets() {
+      const sources = [
+        'assets/Excel.jpeg',
+        // add any section images used in page 2 here, e.g:
+        // 'assets/sec1.png', 'assets/sec2.png', etc.
+      ];
+
+      // Also grab all section images from SECS array
+      if (typeof SECS !== 'undefined') {
+        SECS.forEach(s => { if (s.img) sources.push(s.img); });
+      }
+
+      await Promise.all(sources.map(src => new Promise(resolve => {
+        if (_preloadedImgs[src]) return resolve(); // already loaded
+        const img = new Image();
+        img.onload  = () => { _preloadedImgs[src] = img; resolve(); };
+        img.onerror = () => resolve(); // fail silently, PDF will skip it
+        img.src = src;
+      })));
+
+      console.log('✅ PDF assets preloaded:', Object.keys(_preloadedImgs).length, 'images');
+    }
+
+    // Start preloading immediately when page loads
+    window.addEventListener('load', preloadPdfAssets);
+
     /* ══ STATE ══ */
     let user = {}, gender = '', shuffledQs = [], currentIdx = 0, answers = {};
 
@@ -1778,7 +1808,7 @@
         const hBar = (x, y, val, max, w, col) => { doc.setFillColor(232, 237, 244); doc.roundedRect(x, y, w, 3, 1.5, 1.5, 'F'); if (val > 0) { doc.setFillColor(...h2r(col)); doc.roundedRect(x, y, (w * val / max), 3, 1.5, 1.5, 'F') } };
 
         const pill = (txt, x, y, col) => { const rgb = h2r(col); const safeTxt = pdfText(txt); const tw = doc.getTextWidth(safeTxt) + 8; const bg = [Math.round(rgb[0] * 0.15 + 255 * 0.85), Math.round(rgb[1] * 0.15 + 255 * 0.85), Math.round(rgb[2] * 0.15 + 255 * 0.85)]; doc.setFillColor(...bg); doc.roundedRect(x, y - 3.5, tw, 5.5, 2.5, 2.5, 'F'); doc.setDrawColor(...rgb); doc.setLineWidth(0.25); doc.roundedRect(x, y - 3.5, tw, 5.5, 2.5, 2.5, 'S'); doc.setTextColor(...rgb); doc.setFontSize(7); doc.setFont('helvetica', 'bold'); tx(safeTxt, x + 4, y, { baseline: 'middle' }) };
-        const loadPdfImg = src => new Promise(resolve => { const img = new Image(); img.onload = () => resolve(img); img.onerror = () => resolve(null); img.src = src });
+        const loadPdfImg = src => new Promise.resolve(_preloadedImgs[src] || null);
 
         /* ════ PAGE 1 ════ */
         const uniBannerSrc = 'assets/Excel.jpeg';
