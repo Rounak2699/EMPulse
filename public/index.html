@@ -1808,7 +1808,7 @@
         const hBar = (x, y, val, max, w, col) => { doc.setFillColor(232, 237, 244); doc.roundedRect(x, y, w, 3, 1.5, 1.5, 'F'); if (val > 0) { doc.setFillColor(...h2r(col)); doc.roundedRect(x, y, (w * val / max), 3, 1.5, 1.5, 'F') } };
 
         const pill = (txt, x, y, col) => { const rgb = h2r(col); const safeTxt = pdfText(txt); const tw = doc.getTextWidth(safeTxt) + 8; const bg = [Math.round(rgb[0] * 0.15 + 255 * 0.85), Math.round(rgb[1] * 0.15 + 255 * 0.85), Math.round(rgb[2] * 0.15 + 255 * 0.85)]; doc.setFillColor(...bg); doc.roundedRect(x, y - 3.5, tw, 5.5, 2.5, 2.5, 'F'); doc.setDrawColor(...rgb); doc.setLineWidth(0.25); doc.roundedRect(x, y - 3.5, tw, 5.5, 2.5, 2.5, 'S'); doc.setTextColor(...rgb); doc.setFontSize(7); doc.setFont('helvetica', 'bold'); tx(safeTxt, x + 4, y, { baseline: 'middle' }) };
-        const loadPdfImg = src => new Promise.resolve(_preloadedImgs[src] || null);
+        const loadPdfImg = src => Promise.resolve(_preloadedImgs[src] || null);
 
         /* ════ PAGE 1 ════ */
         const uniBannerSrc = 'assets/Excel.jpeg';
