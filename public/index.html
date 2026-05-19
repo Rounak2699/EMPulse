@@ -1030,14 +1030,14 @@
             </div>
             <div class="form-group">
               <label>Date of Birth *</label>
-              <input type="date" id="inp-dob" placeholder="DD/MM/YYYY" autocomplete="off">
+              <input type="date" id="inp-dob" placeholder="DD/MM/YYYY" autocomplete="off" oninput="document.getElementById('inp-age').value = calcAgeFromDob(this.value)">
               <div class="err" id="err-dob">Please enter your DOB (DD/MM/YYYY).</div>
             </div>
           </div>
           <div class="form-row au3">
             <div class="form-group">
               <label>Age *</label>
-              <input type="text" id="inp-age" readonly>
+              <input type="number" id="inp-age" readonly>
               <div class="err" id="err-age">Valid age (18–80).</div>
             </div>
             <div class="form-group">
@@ -1511,26 +1511,16 @@
     }
 
     /* ══ USER DETAILS ══ */
-    function calculateAge(dobString) {
-      // Parse DOB in DD/MM/YYYY format
-      const parts = dobString.split('/');
-      if (parts.length !== 3) return null;
-      const day = parseInt(parts[0]);
-      const month = parseInt(parts[1]);
-      const year = parseInt(parts[2]);
-
-      // Validate date
-      if (day < 1 || day > 31 || month < 1 || month > 12 || year < 1900) return null;
-
-      const dob = new Date(year, month - 1, day);
-      const today = new Date();
-      let age = today.getFullYear() - dob.getFullYear();
-      const monthDiff = today.getMonth() - dob.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-        age--;
-      }
-      return age;
-    }
+    function calcAgeFromDob(dobValue) {
+  if (!dobValue) return '';
+  const [y, m, d] = dobValue.split('-').map(Number);
+  const today = new Date();
+  const dob = new Date(y, m - 1, d);
+  let age = today.getFullYear() - dob.getFullYear();
+  const monthDiff = today.getMonth() - dob.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) age--;
+  return age;
+}
 
     function updateAge() {
       const dobField = document.getElementById('inp-dob');
@@ -1538,7 +1528,7 @@
       const dobValue = dobField.value.trim();
 
       if (dobValue) {
-        const age = calculateAge(dobValue);
+        const age = calcAgeFromDob(dobValue);
         if (age !== null && age >= 18 && age <= 80) {
           ageField.value = age;
         } else {
